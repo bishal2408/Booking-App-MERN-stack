@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 import cors from "cors";
 import "dotenv/config";
 import bcrypt from "bcryptjs";
-import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken';
+import cookieParser from "cookie-parser";
 
 import { User } from "./models/User.js";
 
@@ -13,6 +14,8 @@ const jwtSecret = 'jahdkhsakkddjaskdnkj29'
 
 // middleware for parsing json body
 app.use(express.json());
+// middleware to read cookies
+app.use(cookieParser())
 
 // middleware to handle CORS policy
 app.use(
@@ -48,15 +51,31 @@ app.post('/login', async (req, res) => {
   if(userDoc) {
     const passOk = bcrypt.compareSync(password, userDoc.password)
     if(passOk) {
-      jwt.sign({email: userDoc.email, id: userDoc._id}, jwtSecret, {}, (err, token) => {
+      jwt.sign({
+        email: userDoc.email,
+        id: userDoc._id,
+      }, jwtSecret, {}, (err, token) => {
         if (err) throw err
-        res.cookie('token', token).json('pass ok')
+        res.cookie('token', token).json(userDoc)
       })
     } else {
       res.status(422).json('pass not ok')
     }
   }else {
     res.json("Not found")
+  }
+})
+
+app.get('/profile', (req, res) => {
+  const {token} = req.cookies
+  if(token) {
+    jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+      if (err) throw err;
+      const {name, email, _id} = await User.findById(userData.id)
+      res.json({name, email, _id})
+    })
+  } else {
+    res.json(null)
   }
 })
 
