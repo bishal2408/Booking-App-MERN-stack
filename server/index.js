@@ -10,13 +10,11 @@ import { User } from "./models/User.js";
 
 const app = express();
 const bcryptSalt = bcrypt.genSaltSync(10);
-const jwtSecret = 'jahdkhsakkddjaskdnkj29'
 
 // middleware for parsing json body
 app.use(express.json());
 // middleware to read cookies
 app.use(cookieParser())
-
 // middleware to handle CORS policy
 app.use(
   cors({
@@ -27,6 +25,7 @@ app.use(
   })
 );
 
+// endpoint to register a user
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -44,6 +43,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// endpoint to login a user using jwt 
 app.post('/login', async (req, res) => {
   const {email, password} = req.body
 
@@ -54,7 +54,7 @@ app.post('/login', async (req, res) => {
       jwt.sign({
         email: userDoc.email,
         id: userDoc._id,
-      }, jwtSecret, {}, (err, token) => {
+      }, process.env.JWT_SECRET, {}, (err, token) => {
         if (err) throw err
         res.cookie('token', token).json(userDoc)
       })
@@ -66,10 +66,11 @@ app.post('/login', async (req, res) => {
   }
 })
 
+// endpoint to get user profile
 app.get('/profile', (req, res) => {
   const {token} = req.cookies
   if(token) {
-    jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+    jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
       if (err) throw err;
       const {name, email, _id} = await User.findById(userData.id)
       res.json({name, email, _id})
@@ -77,6 +78,11 @@ app.get('/profile', (req, res) => {
   } else {
     res.json(null)
   }
+})
+
+app.post('/logout', (req, res) => {
+  res.cookie('token', '').json(true)
+  
 })
 
 // connecting to mongodb database
