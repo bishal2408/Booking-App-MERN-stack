@@ -82,7 +82,7 @@ app.get('/profile', (req, res) => {
 
 app.post('/logout', (req, res) => {
   res.cookie('token', '').json(true)
-  
+
 })
 
 // connecting to mongodb database
@@ -91,7 +91,7 @@ mongoose
   .then(() => {
     console.log("Successfully Connected To Database");
     app.listen(process.env.PORT, () => {
-      console.log("Node server is runbing at port: " + process.env.PORT);
+      console.log("Node server is running at port: " + process.env.PORT);
     });
   })
   .catch((error) => {
