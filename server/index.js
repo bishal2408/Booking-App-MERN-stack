@@ -5,16 +5,21 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
 import cookieParser from "cookie-parser";
+import imageDownloader from 'image-downloader'
 
 import { User } from "./models/User.js";
 
 const app = express();
 const bcryptSalt = bcrypt.genSaltSync(10);
 
+const __dirname = import.meta.dirname 
+
 // middleware for parsing json body
 app.use(express.json());
 // middleware to read cookies
 app.use(cookieParser())
+// middleware to display everything inside /uploads directory
+app.use('/uploads', express.static(__dirname + '/uploads'))
 // middleware to handle CORS policy
 app.use(
   cors({
@@ -80,9 +85,22 @@ app.get('/profile', (req, res) => {
   }
 })
 
+
+
 app.post('/logout', (req, res) => {
   res.cookie('token', '').json(true)
+})
 
+
+app.post('/upload-by-link', async (req, res) => {
+  const {link} = req.body
+  const newName = 'photo' + Date.now() + '.jpg'
+  await imageDownloader.image({
+    url: link,
+    dest: __dirname + '/uploads/' + newName,
+  })
+
+  res.json(newName)
 })
 
 // connecting to mongodb database
