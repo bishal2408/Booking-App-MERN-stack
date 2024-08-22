@@ -195,6 +195,10 @@ app.put('/places', async (req, res) => {
 
 })
 
+app.get('/places', async (req, res) => {
+  res.json(await Place.find({}))
+})
+
 // connecting to mongodb database
 mongoose
   .connect(process.env.MONGO_URL)
