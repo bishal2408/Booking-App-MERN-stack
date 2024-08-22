@@ -10,6 +10,7 @@ import multer from "multer";
 import fs from "fs";
 
 import { User } from "./models/User.js";
+import { Place } from "./models/Place.js";
 
 const app = express();
 const bcryptSalt = bcrypt.genSaltSync(10);
@@ -26,7 +27,6 @@ app.use("/uploads", express.static(__dirname + "/uploads"));
 app.use(
   cors({
     origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: "Content-Type",
     credentials: true,
   })
@@ -115,11 +115,85 @@ app.post("/upload", photosMiddleware.array("photos", 100), (req, res) => {
     const ext = parts[parts.length - 1];
     const newPath = path + "." + ext;
     fs.renameSync(path, newPath);
-    uploadedFiles.push(newPath.replace('uploads\\', ''))
+    uploadedFiles.push(newPath.replace("uploads\\", ""));
   }
-  console.log(uploadedFiles)
   res.json(uploadedFiles);
 });
+
+app.post("/places", async (req, res) => {
+  const { token } = req.cookies;
+  const {
+    title,
+    address,
+    addedPhotos,
+    description,
+    perks,
+    extraInfo,
+    checkIn,
+    checkOut,
+    maxGuests,
+  } = req.body;
+
+  jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
+    if (err) throw err;
+    const owner = userData.id;
+    const placeDoc = await Place.create({
+      owner,
+      title,
+      address,
+      photos: addedPhotos,
+      description,
+      perks,
+      extraInfo,
+      checkIn,
+      checkOut,
+      maxGuests,
+    });
+
+    res.json(placeDoc);
+  });
+});
+
+app.get("/places", (req, res) => {
+  const { token } = req.cookies;
+  jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
+    if (err) throw err;
+    const { id } = userData
+    res.json(await Place.find({owner: id}))
+  });
+});
+
+
+app.get('/places/:id', async (req, res) => {
+  const {id} = req.params
+  res.json(await Place.findById(id))
+})
+
+
+app.put('/places', async (req, res) => {
+  const { token } = req.cookies;
+  const {
+    id, title, address, addedPhotos,description,
+    perks, extraInfo, checkIn, checkOut, maxGuests
+  } = req.body;
+
+
+  jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
+    if (err) throw err
+
+    const placeDoc = await Place.findById(id)
+    if(userData.id === placeDoc.owner.toString()) {
+      placeDoc.set({
+        title, address, photos: addedPhotos, description, perks,
+        extraInfo,checkIn,checkOut,maxGuests
+      })
+
+      await placeDoc.save()
+      res.json('ok')
+    }
+  })
+
+})
 
 // connecting to mongodb database
 mongoose
