@@ -4,7 +4,9 @@ const AddressLink = ({children, className=null}) => {
     if(!className) {
         className = 'gap-1 my-3 '
     }
+
     className += ' flex font-semibold underline'
+
     return (
         <a className={className} target='_blank' href={'https://maps.google.com/?q=' + children}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">

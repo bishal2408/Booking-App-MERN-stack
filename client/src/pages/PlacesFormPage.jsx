@@ -18,12 +18,11 @@ const PlacesFormPage = () => {
     const [checkOut, setCheckOut] = useState('')
     const [maxGuests, setMaxGuests] = useState(1)
     const [price, setPrice] = useState(100)
-
     const [redirect, setRedirect] = useState(false)
 
     useEffect(() => {
         if (!id) {
-            return
+            return;
         }
         axios.get('/places/' + id).then(response => {
             const { data } = response

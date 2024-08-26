@@ -13,6 +13,8 @@ const BookingsPage = () => {
             setBookings(response.data)
         })
     }, [])
+
+    
     return (
         <div>
             <AccountNav />

@@ -5,7 +5,6 @@ const PlaceGallery = ({ place }) => {
 
     if (showAllPhotos) {
         return (
-            // <div>show all photos</div>
             <div className='absolute inset-0 bg-black text-white min-h-screen'>
                 <div className='bg-black p-8 grid gap-4'>
                     <div>
