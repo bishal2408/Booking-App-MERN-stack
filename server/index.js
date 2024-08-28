@@ -35,13 +35,17 @@ app.use(
 
 const getUserDataFromReq = (req) => {
   return new Promise((resolve, reject) => {
-    jwt.verify(req.cookies.token, process.env.JWT_SECRET, {}, async (err, userData) => {
-      if (err) throw err;
-      resolve(userData);
-    });
+    jwt.verify(
+      req.cookies.token,
+      process.env.JWT_SECRET,
+      {},
+      async (err, userData) => {
+        if (err) throw err;
+        resolve(userData);
+      }
+    );
   });
 };
-
 
 // endpoint to register a user
 app.post("/register", async (req, res) => {
@@ -89,14 +93,12 @@ app.post("/login", async (req, res) => {
 });
 
 // endpoint to get user profile
-app.get("/profile", (req, res) => {
+app.get("/profile", async (req, res) => {
   const { token } = req.cookies;
   if (token) {
-    jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
-      if (err) throw err;
-      const { name, email, _id } = await User.findById(userData.id);
-      res.json({ name, email, _id });
-    });
+    const userData = await getUserDataFromReq(req);
+    const { name, email, _id } = await User.findById(userData.id);
+    res.json({ name, email, _id });
   } else {
     res.json(null);
   }
@@ -146,34 +148,30 @@ app.post("/places", async (req, res) => {
     price,
   } = req.body;
 
-  jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
-    if (err) throw err;
-    const owner = userData.id;
-    const placeDoc = await Place.create({
-      owner,
-      title,
-      address,
-      photos: addedPhotos,
-      description,
-      perks,
-      extraInfo,
-      checkIn,
-      checkOut,
-      maxGuests,
-      price,
-    });
-
-    res.json(placeDoc);
+  const userData = await getUserDataFromReq();
+  const owner = userData.id;
+  const placeDoc = await Place.create({
+    owner,
+    title,
+    address,
+    photos: addedPhotos,
+    description,
+    perks,
+    extraInfo,
+    checkIn,
+    checkOut,
+    maxGuests,
+    price,
   });
+
+  res.json(placeDoc);
 });
 
-app.get("/user-places", (req, res) => {
+app.get("/user-places", async (req, res) => {
   const { token } = req.cookies;
-  jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
-    if (err) throw err;
-    const { id } = userData;
-    res.json(await Place.find({ owner: id }));
-  });
+  const userData = await getUserDataFromReq(req);
+  const { id } = userData;
+  res.json(await Place.find({ owner: id }));
 });
 
 app.get("/places/:id", async (req, res) => {
@@ -197,28 +195,26 @@ app.put("/places", async (req, res) => {
     price,
   } = req.body;
 
-  jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
-    if (err) throw err;
+  const userData = await getUserDataFromReq(req);
 
-    const placeDoc = await Place.findById(id);
-    if (userData.id === placeDoc.owner.toString()) {
-      placeDoc.set({
-        title,
-        address,
-        photos: addedPhotos,
-        description,
-        perks,
-        extraInfo,
-        checkIn,
-        checkOut,
-        maxGuests,
-        price,
-      });
+  const placeDoc = await Place.findById(id);
+  if (userData.id === placeDoc.owner.toString()) {
+    placeDoc.set({
+      title,
+      address,
+      photos: addedPhotos,
+      description,
+      perks,
+      extraInfo,
+      checkIn,
+      checkOut,
+      maxGuests,
+      price,
+    });
 
-      await placeDoc.save();
-      res.json("ok");
-    }
-  });
+    await placeDoc.save();
+    res.json("ok");
+  }
 });
 
 app.get("/places", async (req, res) => {
@@ -226,7 +222,7 @@ app.get("/places", async (req, res) => {
 });
 
 app.post("/bookings", async (req, res) => {
-  const userData = await getUserDataFromReq(req)
+  const userData = await getUserDataFromReq(req);
   const { place, checkIn, checkOut, numberOfGuests, name, phone, price } =
     req.body;
   Booking.create({
@@ -237,7 +233,7 @@ app.post("/bookings", async (req, res) => {
     name,
     phone,
     price,
-    user: userData.id
+    user: userData.id,
   })
     .then((doc) => {
       res.json(doc);
@@ -247,13 +243,11 @@ app.post("/bookings", async (req, res) => {
     });
 });
 
-
-
 app.get("/bookings", async (req, res) => {
-  const userData = await getUserDataFromReq(req)
-  res.json(await Booking.find({user: userData.id}).populate('place'))
-
+  const userData = await getUserDataFromReq(req);
+  res.json(await Booking.find({ user: userData.id }).populate("place"));
 });
+
 // connecting to mongodb database
 mongoose
   .connect(process.env.MONGO_URL)
