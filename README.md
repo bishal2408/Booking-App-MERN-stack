@@ -1,1 +1,2 @@
-Add read me
+How to run:
+
